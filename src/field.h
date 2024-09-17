@@ -238,7 +238,7 @@ static void secp256k1_fe_add_int(secp256k1_fe *r, int a);
 #define secp256k1_fe_mul_int(r, a) ASSERT_INT_CONST_AND_DO(a, secp256k1_fe_mul_int_unchecked(r, a))
 
 /** Like secp256k1_fe_mul_int but a is not checked to be an integer constant expression.
- * 
+ *
  * Should not be called directly outside of tests.
  */
 static void secp256k1_fe_mul_int_unchecked(secp256k1_fe *r, int a);
@@ -351,5 +351,8 @@ static void secp256k1_fe_verify(const secp256k1_fe *a);
 /** Check that magnitude of a is at most m (no-op unless VERIFY is enabled). */
 static void secp256k1_fe_verify_magnitude(const secp256k1_fe *a, int m);
 #define SECP256K1_FE_VERIFY_MAGNITUDE(a, m) secp256k1_fe_verify_magnitude(a, m)
+
+/** Checks whether a field element is a quadratic residue. */
+static int secp256k1_fe_is_quad_var(const secp256k1_fe *a);
 
 #endif /* SECP256K1_FIELD_H */

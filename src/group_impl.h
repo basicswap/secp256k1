@@ -941,4 +941,14 @@ static int secp256k1_ge_x_frac_on_curve_var(const secp256k1_fe *xn, const secp25
      return secp256k1_fe_is_square_var(&r);
 }
 
+static int secp256k1_ge_set_xquad(secp256k1_ge *r, const secp256k1_fe *x) {
+    secp256k1_fe x2, x3;
+    r->x = *x;
+    secp256k1_fe_sqr(&x2, x);
+    secp256k1_fe_mul(&x3, x, &x2);
+    r->infinity = 0;
+    secp256k1_fe_add_int(&x3, SECP256K1_B);
+    return secp256k1_fe_sqrt(&r->y, &x3);
+}
+
 #endif /* SECP256K1_GROUP_IMPL_H */

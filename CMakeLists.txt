@@ -48,10 +48,15 @@ option(SECP256K1_INSTALL "Enable installation." ${PROJECT_IS_TOP_LEVEL})
 # We declare all options before processing them, to make sure we can express
 # dependendencies while processing.
 option(SECP256K1_ENABLE_MODULE_ECDH "Enable ECDH module." ON)
-option(SECP256K1_ENABLE_MODULE_RECOVERY "Enable ECDSA pubkey recovery module." OFF)
+option(SECP256K1_ENABLE_MODULE_RECOVERY "Enable ECDSA pubkey recovery module." ON)
 option(SECP256K1_ENABLE_MODULE_EXTRAKEYS "Enable extrakeys module." ON)
 option(SECP256K1_ENABLE_MODULE_SCHNORRSIG "Enable schnorrsig module." ON)
 option(SECP256K1_ENABLE_MODULE_ELLSWIFT "Enable ElligatorSwift module." ON)
+
+option(SECP256K1_ENABLE_MODULE_GENERATOR "Enable generator module." ON)
+option(SECP256K1_ENABLE_MODULE_ED25519 "Enable ed25519 module." ON)
+option(SECP256K1_ENABLE_MODULE_DLEAG "Enable DLEAG module." ON)
+option(SECP256K1_ENABLE_MODULE_ECDSAOTVES "Enable ECDSA OT-VES module." ON)
 
 # Processing must be done in a topological sorting of the dependency graph
 # (dependent module first).
@@ -83,6 +88,26 @@ option(SECP256K1_USE_EXTERNAL_DEFAULT_CALLBACKS "Enable external default callbac
 if(SECP256K1_USE_EXTERNAL_DEFAULT_CALLBACKS)
   add_compile_definitions(USE_EXTERNAL_DEFAULT_CALLBACKS=1)
 endif()
+
+if(SECP256K1_ENABLE_MODULE_GENERATOR)
+  add_compile_definitions(ENABLE_MODULE_GENERATOR=1)
+endif()
+
+if(SECP256K1_ENABLE_MODULE_ED25519)
+  add_compile_definitions(ENABLE_MODULE_ED25519=1)
+endif()
+
+if(SECP256K1_ENABLE_MODULE_DLEAG)
+  if(NOT SECP256K1_ENABLE_MODULE_RECOVERY)
+    message(FATAL_ERROR "Module dependency error: Recovery module is required by the DLEAG module.")
+  endif()
+  add_compile_definitions(ENABLE_MODULE_DLEAG=1)
+endif()
+
+if(SECP256K1_ENABLE_MODULE_ECDSAOTVES)
+  add_compile_definitions(ENABLE_MODULE_ECDSAOTVES=1)
+endif()
+
 
 set(SECP256K1_ECMULT_WINDOW_SIZE 15 CACHE STRING "Window size for ecmult precomputation for verification, specified as integer in range [2..24]. The default value is a reasonable setting for desktop machines (currently 15). [default=15]")
 set_property(CACHE SECP256K1_ECMULT_WINDOW_SIZE PROPERTY STRINGS 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24)
@@ -142,6 +167,15 @@ option(SECP256K1_EXPERIMENTAL "Allow experimental configuration options." OFF)
 if(NOT SECP256K1_EXPERIMENTAL)
   if(SECP256K1_ASM STREQUAL "arm32")
     message(FATAL_ERROR "ARM32 assembly is experimental. Use -DSECP256K1_EXPERIMENTAL=ON to allow.")
+  endif()
+  if(SECP256K1_ENABLE_MODULE_DLEAG)
+    message(FATAL_ERROR "DLEAG module is experimental. Use -DSECP256K1_EXPERIMENTAL=ON to allow.")
+  endif()
+  if(SECP256K1_ENABLE_MODULE_ECDSAOTVES)
+    message(FATAL_ERROR "ECDSAOTVES module is experimental. Use -DSECP256K1_EXPERIMENTAL=ON to allow.")
+  endif()
+  if(SECP256K1_ENABLE_MODULE_ED25519)
+    message(FATAL_ERROR "ED25519 module is experimental. Use -DSECP256K1_EXPERIMENTAL=ON to allow.")
   endif()
 endif()
 
@@ -306,6 +340,12 @@ message("  ECDSA pubkey recovery ............... ${SECP256K1_ENABLE_MODULE_RECOV
 message("  extrakeys ........................... ${SECP256K1_ENABLE_MODULE_EXTRAKEYS}")
 message("  schnorrsig .......................... ${SECP256K1_ENABLE_MODULE_SCHNORRSIG}")
 message("  ElligatorSwift ...................... ${SECP256K1_ENABLE_MODULE_ELLSWIFT}")
+
+message("  generator ........................... ${SECP256K1_ENABLE_MODULE_GENERATOR}")
+message("  ed25519 ............................. ${SECP256K1_ENABLE_MODULE_ED25519}")
+message("  DLEAG ............................... ${SECP256K1_ENABLE_MODULE_DLEAG}")
+message("  ECDSA OT-VES ........................ ${SECP256K1_ENABLE_MODULE_ECDSAOTVES}")
+
 message("Parameters:")
 message("  ecmult window size .................. ${SECP256K1_ECMULT_WINDOW_SIZE}")
 message("  ecmult gen table size ............... ${SECP256K1_ECMULT_GEN_KB} KiB")

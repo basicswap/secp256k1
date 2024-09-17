@@ -7423,6 +7423,22 @@ static void run_ecdsa_wycheproof(void) {
 # include "modules/ellswift/tests_impl.h"
 #endif
 
+#ifdef ENABLE_MODULE_ED25519
+# include "modules/ed25519/tests_impl.h"
+#endif
+
+#ifdef ENABLE_MODULE_GENERATOR
+# include "modules/generator/tests_impl.h"
+#endif
+
+#ifdef ENABLE_MODULE_DLEAG
+# include "modules/dleag/tests_impl.h"
+#endif
+
+#ifdef ENABLE_MODULE_ECDSAOTVES
+# include "modules/ecdsaotves/tests_impl.h"
+#endif
+
 static void run_secp256k1_memczero_test(void) {
     unsigned char buf1[6] = {1, 2, 3, 4, 5, 6};
     unsigned char buf2[sizeof(buf1)];
@@ -7773,6 +7789,22 @@ int main(int argc, char **argv) {
 
 #ifdef ENABLE_MODULE_ELLSWIFT
     run_ellswift_tests();
+#endif
+
+#ifdef ENABLE_MODULE_ED25519
+    run_ed25519_tests();
+#endif
+
+#ifdef ENABLE_MODULE_GENERATOR
+    run_generator_tests();
+#endif
+
+#ifdef ENABLE_MODULE_DLEAG
+    run_dleag_tests();
+#endif
+
+#ifdef ENABLE_MODULE_ECDSAOTVES
+    run_ecdsaotves_tests();
 #endif
 
     /* util tests */
