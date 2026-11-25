@@ -153,6 +153,7 @@ int secp256k1_ecdsa_sign_recoverable_gen(const secp256k1_context* ctx, secp256k1
 
 static int secp256k1_ecdsa_sig_verify_gen(const secp256k1_scalar *sigr, const secp256k1_scalar *sigs, const secp256k1_ge *pubkey, const secp256k1_scalar *message, const secp256k1_gej *genj) {
     unsigned char c[32];
+    int range;
     secp256k1_scalar sn, u1, u2;
     secp256k1_fe xr;
     secp256k1_gej pubkeyj;
@@ -174,7 +175,13 @@ static int secp256k1_ecdsa_sig_verify_gen(const secp256k1_scalar *sigr, const se
     secp256k1_gej_add_ge(&pr, &pr, &ge);
 
     secp256k1_scalar_get_b32(c, sigr);
-    secp256k1_fe_set_b32_mod(&xr, c);
+    range = secp256k1_fe_set_b32_limit(&xr, c);
+#ifdef VERIFY
+    /* We know that c is in range; it comes from a scalar. */
+    VERIFY_CHECK(range);
+#else
+    (void)range;
+#endif
 
     /** We now have the recomputed R point in pr, and its claimed x coordinate (modulo n)
      *  in xr. Naively, we would extract the x coordinate from pr (requiring a inversion modulo p),
