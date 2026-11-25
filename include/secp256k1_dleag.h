@@ -12,6 +12,10 @@ extern "C" {
 
 SECP256K1_API size_t secp256k1_dleag_size(size_t n_bits);
 
+/* msg32: a 32-byte hash the proof is bound to, verified with the same one (can be NULL).
+ * Given, the proof signs SHA256(SHA256(tag)||SHA256(tag)||msg32) with tag "dleag message";
+ * without, SHA256("dleag message"). */
+
 SECP256K1_API int secp256k1_dleag_prove(
     const secp256k1_context *ctx,
     unsigned char *proof_out,
@@ -22,7 +26,8 @@ SECP256K1_API int secp256k1_dleag_prove(
     const secp256k1_generator *gen_s_a,
     const secp256k1_generator *gen_s_b,
     const unsigned char *gen_e_a,
-    const unsigned char *gen_e_b
+    const unsigned char *gen_e_b,
+    const unsigned char *msg32      /* 32 bytes or NULL */
 ) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4) SECP256K1_ARG_NONNULL(6) SECP256K1_ARG_NONNULL(7) SECP256K1_ARG_NONNULL(8) SECP256K1_ARG_NONNULL(9);
 
 SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_dleag_verify(
@@ -32,7 +37,8 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_dleag_verify(
     const secp256k1_generator *gen_s_a,
     const secp256k1_generator *gen_s_b,
     const unsigned char *gen_e_a,
-    const unsigned char *gen_e_b
+    const unsigned char *gen_e_b,
+    const unsigned char *msg32      /* 32 bytes or NULL */
 ) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(4) SECP256K1_ARG_NONNULL(5) SECP256K1_ARG_NONNULL(6) SECP256K1_ARG_NONNULL(7);
 
 /** Create a recoverable ECDSA signature.  Variable base point
@@ -125,13 +131,15 @@ SECP256K1_API int secp256k1_ed25519_dleag_prove(
     size_t *proof_len,              /* Input length of proof_out buffer, output length of proof. */
     const unsigned char *key,       /* 32 bytes */
     size_t n_bits,
-    const unsigned char *nonce     /* 32 bytes */
+    const unsigned char *nonce,     /* 32 bytes */
+    const unsigned char *msg32      /* 32 bytes or NULL */
 ) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(4);
 
 SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_ed25519_dleag_verify(
     const secp256k1_context *ctx,
     const unsigned char *proof,
-    size_t proof_len
+    size_t proof_len,
+    const unsigned char *msg32      /* 32 bytes or NULL */
 ) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2);
 
 

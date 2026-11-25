@@ -11,7 +11,20 @@
 
 typedef uint8_t ed25519_scalar_t[32];
 typedef uint8_t ed25519_point_t[32];
-static const char *dleag_sig_message = "dleag message";
+static const char *dleag_tag = "dleag message";
+
+/* Without msg32 the tag's plain hash, which proofs made before msg32 sign */
+static void dleag_sig_hash(const secp256k1_hash_ctx *hash_ctx, unsigned char *out32, const unsigned char *msg32) {
+    secp256k1_sha256 sha;
+    if (msg32 == NULL) {
+        secp256k1_sha256_initialize(&sha);
+        secp256k1_sha256_write(hash_ctx, &sha, (const unsigned char*) dleag_tag, strlen(dleag_tag));
+    } else {
+        secp256k1_sha256_initialize_tagged(hash_ctx, &sha, (const unsigned char*) dleag_tag, strlen(dleag_tag));
+        secp256k1_sha256_write(hash_ctx, &sha, msg32, 32);
+    }
+    secp256k1_sha256_finalize(hash_ctx, &sha, out32);
+}
 
 
 static int secp256k1_ecdsa_sig_sign_gen(secp256k1_scalar *sigr, secp256k1_scalar *sigs, const secp256k1_scalar *seckey, const secp256k1_scalar *message, const secp256k1_scalar *nonce, int *recid, const secp256k1_gej *genj) {
@@ -467,7 +480,8 @@ int secp256k1_dleag_prove(
     const secp256k1_generator *gen_s_a,
     const secp256k1_generator *gen_s_b,
     const unsigned char *gen_e_a,
-    const unsigned char *gen_e_b) {
+    const unsigned char *gen_e_b,
+    const unsigned char *msg32) {
     size_t i, j;
     secp256k1_rfc6979_hmac_sha256 rng;
     unsigned char rngseed[32 + 33 + 32];
@@ -545,9 +559,7 @@ int secp256k1_dleag_prove(
     {
     secp256k1_ecdsa_recoverable_signature sig;
     int rec = -1;
-    secp256k1_sha256_initialize(&hash_state);
-    secp256k1_sha256_write(hash_ctx, &hash_state, (const unsigned char*) dleag_sig_message, strlen(dleag_sig_message));
-    secp256k1_sha256_finalize(hash_ctx, &hash_state, preimage_hash);
+    dleag_sig_hash(hash_ctx, preimage_hash, msg32);
     if (!secp256k1_ecdsa_sign_recoverable_gen(ctx, &sig, preimage_hash, key, NULL, NULL, gen_s_a) ||
         !secp256k1_ecdsa_recoverable_signature_serialize_compact(ctx, proof_out + 65, &rec, &sig)) {
         return 0;
@@ -803,7 +815,8 @@ int secp256k1_dleag_verify(
     const secp256k1_generator *gen_s_a,
     const secp256k1_generator *gen_s_b,
     const unsigned char *gen_e_a,
-    const unsigned char *gen_e_b) {
+    const unsigned char *gen_e_b,
+    const unsigned char *msg32) {
     size_t i, j;
     int overflow;
     secp256k1_gej gej_gen_s_a, gej_gen_s_b;
@@ -850,9 +863,7 @@ int secp256k1_dleag_verify(
     {
     secp256k1_pubkey spk;
     secp256k1_ecdsa_signature sig;
-    secp256k1_sha256_initialize(&hash_state);
-    secp256k1_sha256_write(hash_ctx, &hash_state, (const unsigned char*) dleag_sig_message, strlen(dleag_sig_message));
-    secp256k1_sha256_finalize(hash_ctx, &hash_state, preimage_hash);
+    dleag_sig_hash(hash_ctx, preimage_hash, msg32);
     if (!secp256k1_ec_pubkey_parse(ctx, &spk, proof, 33) ||
         !secp256k1_ecdsa_signature_parse_compact(ctx, &sig, proof + 65) ||
         !secp256k1_ecdsa_verify_gen(ctx, &sig, preimage_hash, &spk, gen_s_a)) {
@@ -1042,19 +1053,21 @@ int secp256k1_ed25519_dleag_prove(
     size_t *proof_len,
     const unsigned char *key,
     size_t n_bits,
-    const unsigned char *nonce) {
+    const unsigned char *nonce,
+    const unsigned char *msg32) {
     return secp256k1_dleag_prove(ctx, proof_out, proof_len, key, n_bits, nonce,
                                  &secp256k1_generator_const_g, &secp256k1_generator_const_h,
-                                 ed25519_gen, ed25519_gen2);
+                                 ed25519_gen, ed25519_gen2, msg32);
 }
 
 int secp256k1_ed25519_dleag_verify(
     const secp256k1_context *ctx,
     const unsigned char *proof,
-    size_t proof_len) {
+    size_t proof_len,
+    const unsigned char *msg32) {
     return secp256k1_dleag_verify(ctx, proof, proof_len,
                                   &secp256k1_generator_const_g, &secp256k1_generator_const_h,
-                                  ed25519_gen, ed25519_gen2);
+                                  ed25519_gen, ed25519_gen2, msg32);
 }
 
 #endif
